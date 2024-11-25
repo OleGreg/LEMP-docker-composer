@@ -21,4 +21,4 @@ A lightweight and portable LEMP (Linux, Nginx, MySQL, PHP) stack powered by Dock
    git clone <repository-url>
    cd <repository-folder>
 
-2. Add .env file for environment variables
+2. Add your environment variables in example.env, and then save as ".env". compose.yaml will use these .env variables for your container build

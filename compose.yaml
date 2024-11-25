@@ -1,0 +1,66 @@
+services:
+  nginx:
+    container_name: ${CONTAINER_NAME}-nginx
+    image: nginx:latest
+    # restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:rw
+      - ./src:/var/www/html:rw
+    networks:
+      - internal
+
+  php:
+    container_name: ${CONTAINER_NAME}-php
+    image: custom-php:latest
+    volumes:
+      - ./src:/var/www/html:rw
+    build:
+      context: .
+      dockerfile: php.Dockerfile
+    networks:
+      - internal
+
+  database:
+    container_name: ${CONTAINER_NAME}-database
+    image: mysql:latest
+    # restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+      MYSQL_USER: ${DATABASE_USER}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$DATABASE_ROOT_PASSWORD" ]
+      timeout: 20s
+      retries: 10
+    ports:
+      - "3306:3306"
+    volumes:
+      - sunergosdbdata:/var/lib/mysql
+    networks:
+      - internal
+
+  phpmyadmin:
+    container_name: ${CONTAINER_NAME}-phpmyadmin
+    image: arm64v8/phpmyadmin
+    env_file: .env
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: "${DATABASE_ROOT_PASSWORD}"
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    networks:
+      - internal
+
+volumes:
+  sunergosdbdata:
+
+networks:
+  internal:
+    driver: bridge
